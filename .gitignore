@@ -1,0 +1,43 @@
+# OS & IDE
+.DS_Store
+Thumbs.db
+*.user
+*.suo
+*.userprefs
+*.pidb
+*.booproj
+.idea/
+.vs/
+*.sln
+*.csproj
+*.unityproj
+
+# Unity generated folders
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+
+# Test project artifacts
+test-project/UnityArchitectValidation/[Ll]ibrary/
+test-project/UnityArchitectValidation/[Tt]emp/
+test-project/UnityArchitectValidation/[Oo]bj/
+test-project/UnityArchitectValidation/[Ll]ogs/
+test-project/UnityArchitectValidation/[Uu]ser[Ss]ettings/
+
+# Zip and temporary scratch files
+*.zip
+*.ps1
+*.json
+!package.json
+!mcp-config.example.json
+!unity-package/**/package.json
+!unity-package/**/*.json
+
+# Packages
+*.tgz
+node_modules/

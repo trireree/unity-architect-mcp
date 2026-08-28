@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "unity": {
+      "command": "node",
+      "args": [
+        "C:/Users/fbara/Documents/antigravity/valiant-tesla/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "UNITY_BRIDGE_URL": "http://127.0.0.1:8080"
+      }
+    }
+  }
+}

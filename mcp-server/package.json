@@ -1,0 +1,34 @@
+{
+  "name": "unity-mcp-server",
+  "version": "1.0.0",
+  "description": "Ultra-advanced Unity MCP Server for complete Unity Editor automation, vision inspection, C# REPL, and game scaffolding.",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "unity-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc -w"
+  },
+  "keywords": [
+    "mcp",
+    "unity",
+    "ai",
+    "gamedev",
+    "automation",
+    "claude",
+    "antigravity"
+  ],
+  "author": "Antigravity Team",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "typescript": "^5.7.3"
+  }
+}
