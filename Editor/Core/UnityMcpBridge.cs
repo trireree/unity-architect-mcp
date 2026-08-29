@@ -326,8 +326,49 @@ namespace Antigravity.UnityMCP.Editor.Core
                         var healReport = SelfHealingEngine.RunSelfHealingLoop(req.target);
                         return McpResponse.Success(healReport.isHealed ? "Self-healing completed." : "Self-healing loop finished with remaining issues.", JsonUtility.ToJson(healReport, true));
                     }
-                    case "vision_capture":
-                        return VisionHandler.CaptureSceneScreenshot();
+                    // 11. CLOSED-LOOP COMPILATION & AST AUTO-FIX
+                    case "write_and_verify_script":
+                        return ClosedLoopCompilationHandler.WriteAndVerifyScript(req.path, req.code ?? req.text, true);
+
+                    // 12. SPATIAL & PHYSICS PROBES
+                    case "physics_raycast":
+                        return SpatialAndPhysicsProbeHandler.Raycast(req.position ?? Vector3.zero, req.rotation ?? Vector3.down, req.mass > 0 ? req.mass : 100f);
+                    case "physics_overlap_sphere":
+                        return SpatialAndPhysicsProbeHandler.OverlapSphere(req.position ?? Vector3.zero, req.mass > 0 ? req.mass : 10f);
+                    case "spatial_context":
+                        return SpatialAndPhysicsProbeHandler.GetSpatialContext(req.target ?? "Player", req.mass > 0 ? req.mass : 30f);
+
+                    // 13. SERIALIZED DATA, INSPECTOR & META
+                    case "inspect_serialized_fields":
+                        return SerializedDataAndMetaHandler.InspectSerializedProperties(req.target, req.componentType);
+                    case "resolve_guid":
+                        return SerializedDataAndMetaHandler.ResolveGuid(req.text ?? req.name);
+                    case "resolve_path_to_guid":
+                        return SerializedDataAndMetaHandler.ResolvePathToGuid(req.path);
+
+                    // 14. TECHNICAL ART, ANIMATION & SHADERS
+                    case "animator_create_controller":
+                        return TechArtAndAnimationHandler.CreateAnimatorControllerWithStates(req.path, req.name, null, null);
+                    case "shader_keywords_modify":
+                        return TechArtAndAnimationHandler.ConfigureMaterialShaderKeywords(req.path, null, null);
+
+                    // 15. PACKAGE MANAGER (UPM)
+                    case "package_add":
+                        return PackageManagerHandler.AddUpmPackage(req.name ?? req.text);
+                    case "package_remove":
+                        return PackageManagerHandler.RemoveUpmPackage(req.name ?? req.text);
+                    case "package_list":
+                        return PackageManagerHandler.GetInstalledPackages();
+
+                    // 16. TOKEN COMPRESSION & SMART CONTEXT
+                    case "query_compact_context":
+                        return SmartContextCompressionHandler.QueryCompressedContext(req.text ?? req.query, req.count > 0 ? req.count : 30);
+
+                    // 17. CUSTOM EDITOR WINDOWS & TOOLING
+                    case "scaffold_editor_window":
+                        return CustomEditorToolingHandler.ScaffoldCustomEditorWindow(req.name ?? "CustomToolWindow", req.text ?? "Tools/Custom Tool");
+                    case "scaffold_custom_inspector":
+                        return CustomEditorToolingHandler.ScaffoldCustomInspector(req.name, req.path ?? "Assets/Editor");
 
                     default:
                         return McpResponse.Error($"Unknown action: '{req.action}'");
