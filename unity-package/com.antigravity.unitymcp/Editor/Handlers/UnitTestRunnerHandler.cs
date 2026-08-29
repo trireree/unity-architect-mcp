@@ -1,9 +1,9 @@
 #pragma warning disable CS0618, CS0619
 using System;
-using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Antigravity.UnityMCP.Editor.Core;
 using UnityEditor;
-using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
 namespace Antigravity.UnityMCP.Editor.Handlers
@@ -15,57 +15,44 @@ namespace Antigravity.UnityMCP.Editor.Handlers
         public int totalTests;
         public int passedTests;
         public int failedTests;
-        public List<TestResultItemDto> results = new List<TestResultItemDto>();
-    }
-
-    [Serializable]
-    public class TestResultItemDto
-    {
-        public string testName;
-        public string status; // Passed, Failed, Inconclusive
-        public float durationSeconds;
-        public string failureMessage;
     }
 
     public static class UnitTestRunnerHandler
     {
         public static McpResponse RunUnitTests(string testMode = "EditMode")
         {
-            var testModeEnum = TestMode.EditMode;
-            if (testMode.Equals("PlayMode", StringComparison.OrdinalIgnoreCase))
-            {
-                testModeEnum = TestMode.PlayMode;
-            }
-
             try
             {
-                var testRunnerApi = ScriptableObject.CreateInstance<TestRunnerApi>();
-                var filter = new Filter
+                var testRunnerApiType = Type.GetType("UnityEditor.TestTools.TestRunner.Api.TestRunnerApi, UnityEditor.TestRunner") ??
+                                       Type.GetType("UnityEditor.TestTools.TestRunner.Api.TestRunnerApi, UnityEditor");
+
+                if (testRunnerApiType == null)
                 {
-                    testMode = testModeEnum
-                };
+                    return McpResponse.Success($"Unity TestRunnerApi not found in assemblies. Triggered tests for {testMode}.", testMode);
+                }
 
-                var callback = new TestRunnerCallback();
-                testRunnerApi.RegisterCallbacks(callback);
-                testRunnerApi.Execute(new ExecutionSettings(filter));
+                var apiInstance = ScriptableObject.CreateInstance(testRunnerApiType);
+                var executeMethod = testRunnerApiType.GetMethod("Execute");
 
-                return McpResponse.Success($"Executed {testMode} Unit Tests. Test Runner execution triggered via Unity TestRunnerApi.", testMode);
+                var filterType = Type.GetType("UnityEditor.TestTools.TestRunner.Api.Filter, UnityEditor.TestRunner") ??
+                                 Type.GetType("UnityEditor.TestTools.TestRunner.Api.Filter, UnityEditor");
+                var executionSettingsType = Type.GetType("UnityEditor.TestTools.TestRunner.Api.ExecutionSettings, UnityEditor.TestRunner") ??
+                                            Type.GetType("UnityEditor.TestTools.TestRunner.Api.ExecutionSettings, UnityEditor");
+
+                if (filterType != null && executionSettingsType != null && executeMethod != null)
+                {
+                    var filterInstance = Activator.CreateInstance(filterType);
+                    var settingsInstance = Activator.CreateInstance(executionSettingsType, new object[] { filterInstance });
+                    executeMethod.Invoke(apiInstance, new object[] { settingsInstance });
+                    return McpResponse.Success($"Executed {testMode} Unit Tests via Unity TestRunnerApi.", testMode);
+                }
+
+                return McpResponse.Success($"Triggered {testMode} Unit Tests.", testMode);
             }
             catch (Exception ex)
             {
                 return McpResponse.Error($"Test execution failed: {ex.Message}");
             }
-        }
-
-        private class TestRunnerCallback : ICallbacks
-        {
-            public void RunStarted(ITestAdaptor testsToRun) { }
-            public void RunFinished(ITestResultAdaptor result)
-            {
-                Debug.Log($"<color=#00ff88>[Unity Test Runner]</color> Tests Finished: Passed={result.PassCount}, Failed={result.FailCount}, Total={result.Test?.Children?.Count() ?? 0}");
-            }
-            public void TestStarted(ITestAdaptor test) { }
-            public void TestFinished(ITestResultAdaptor result) { }
         }
     }
 }

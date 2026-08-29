@@ -1,0 +1,19 @@
+{
+  "name": "com.antigravity.unitymcp",
+  "version": "1.0.0",
+  "displayName": "Unity MCP Bridge (Antigravity)",
+  "description": "Ultra-advanced Model Context Protocol (MCP) Bridge for deep Unity Editor orchestration, C# REPL, vision feedback, reflection, and gameplay scaffolding.",
+  "unity": "2021.3",
+  "author": {
+    "name": "Antigravity Team",
+    "email": "support@antigravity.dev"
+  },
+  "keywords": [
+    "mcp",
+    "ai",
+    "llm",
+    "automation",
+    "editor",
+    "agent"
+  ]
+}
