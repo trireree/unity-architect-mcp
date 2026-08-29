@@ -458,6 +458,14 @@ namespace Antigravity.UnityMCP.Editor.Core
                     case "get_live_editor_context":
                         return BiDirectionalIdeSyncHandler.GetLiveEditorContext();
 
+                    // 29. DRY-RUN COMPILATION, PRE-FLIGHT CHECKS & ATOMIC TRANSACTIONS
+                    case "dry_run_compile_csharp":
+                        return SafetyAndPreFlightValidationHandler.DryRunCompileCSharp(req.code ?? req.text);
+                    case "preflight_check_entity":
+                        return SafetyAndPreFlightValidationHandler.PreFlightCheckEntity(req.path ?? req.name ?? req.target, req.path != null);
+                    case "execute_atomic_transaction":
+                        return SafetyAndPreFlightValidationHandler.ExecuteAtomicTransaction(rawBody ?? req.text);
+
                     default:
                         return McpResponse.Error($"Unknown action: '{req.action}'");
                 }
