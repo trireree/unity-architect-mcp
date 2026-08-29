@@ -120,7 +120,6 @@ namespace Antigravity.UnityMCP.Editor.Handlers
             rootRect.anchoredPosition = anchoredPos;
             rootRect.sizeDelta = size;
 
-            // Background
             var bgGo = new GameObject("Background");
             bgGo.transform.SetParent(barRoot.transform, false);
             var bgRect = bgGo.AddComponent<RectTransform>();
@@ -130,7 +129,6 @@ namespace Antigravity.UnityMCP.Editor.Handlers
             var bgImg = bgGo.AddComponent<Image>();
             bgImg.color = bgColor;
 
-            // Fill
             var fillGo = new GameObject("Fill");
             fillGo.transform.SetParent(barRoot.transform, false);
             var fillRect = fillGo.AddComponent<RectTransform>();
@@ -140,7 +138,6 @@ namespace Antigravity.UnityMCP.Editor.Handlers
             var fillImg = fillGo.AddComponent<Image>();
             fillImg.color = fillColor;
 
-            // Label
             if (!string.IsNullOrEmpty(labelText))
             {
                 CreateStyledText(barRoot.transform, "Label", labelText, 14, TextAnchor.MiddleLeft, Color.white, Vector2.zero, Vector2.one, new Vector2(8f, 0f), new Vector2(-16f, 0f));
@@ -150,7 +147,7 @@ namespace Antigravity.UnityMCP.Editor.Handlers
         }
 
         // ==========================================
-        // 1000X ULTRA UI PRESETS
+        // 1000000X ULTRA UI PRESET ARCHITECTURE
         // ==========================================
 
         public static McpResponse CreateModernGameHUD(string theme = "Cyberpunk")
@@ -167,7 +164,7 @@ namespace Antigravity.UnityMCP.Editor.Handlers
             Color healthColor = HexToColor("#ff3366");
             Color armorColor = HexToColor("#00aaff");
             Color staminaColor = HexToColor("#ffcc00");
-            Color darkBg = HexToColor("#0a0e14", 0.75f);
+            Color darkBg = HexToColor("#0a0e14", 0.8f);
 
             if (theme.Equals("Military", StringComparison.OrdinalIgnoreCase))
             {
@@ -177,7 +174,7 @@ namespace Antigravity.UnityMCP.Editor.Handlers
                 darkBg = HexToColor("#14181c", 0.85f);
             }
 
-            // 1. Bottom-Left: Health & Armor & Stamina Bars
+            // 1. Bottom-Left: Status Bars (Health, Armor, Stamina)
             var statusGroup = new GameObject("Status_Group");
             statusGroup.transform.SetParent(hudRoot.transform, false);
             var statusRect = statusGroup.AddComponent<RectTransform>();
@@ -203,7 +200,7 @@ namespace Antigravity.UnityMCP.Editor.Handlers
             ammoRect.sizeDelta = new Vector2(240f, 90f);
 
             CreatePanel(ammoGroup.transform, "Ammo_BG", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, darkBg);
-            CreateStyledText(ammoGroup.transform, "WeaponName", "ASSAULT RIFLE", 16, TextAnchor.UpperLeft, primaryColor, Vector2.zero, Vector2.one, new Vector2(16f, -14f), new Vector2(-32f, -30f));
+            CreateStyledText(ammoGroup.transform, "WeaponName", "TACTICAL RIFLE", 16, TextAnchor.UpperLeft, primaryColor, Vector2.zero, Vector2.one, new Vector2(16f, -14f), new Vector2(-32f, -30f));
             CreateStyledText(ammoGroup.transform, "AmmoCount", "30 / 120", 32, TextAnchor.LowerRight, Color.white, Vector2.zero, Vector2.one, new Vector2(-16f, 12f), new Vector2(-32f, -30f));
 
             // 3. Top-Right: Minimap Radar Frame
@@ -218,7 +215,7 @@ namespace Antigravity.UnityMCP.Editor.Handlers
 
             CreatePanel(miniGroup.transform, "Radar_BG", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, darkBg);
             CreateStyledText(miniGroup.transform, "Compass_N", "N", 14, TextAnchor.UpperCenter, primaryColor, Vector2.zero, Vector2.one, new Vector2(0f, -6f), Vector2.zero);
-            CreateStyledText(miniGroup.transform, "LocationLabel", "DOWNTOWN DISTRICT", 11, TextAnchor.LowerCenter, HexToColor("#aaaaaa"), Vector2.zero, Vector2.one, new Vector2(0f, 6f), Vector2.zero);
+            CreateStyledText(miniGroup.transform, "LocationLabel", "DOWNTOWN SECTOR", 11, TextAnchor.LowerCenter, HexToColor("#aaaaaa"), Vector2.zero, Vector2.one, new Vector2(0f, 6f), Vector2.zero);
 
             // 4. Center: Dynamic Crosshair
             var crossGroup = new GameObject("Crosshair_Center");
@@ -239,7 +236,7 @@ namespace Antigravity.UnityMCP.Editor.Handlers
             return McpResponse.Success($"Created Ultra Modern Game HUD with {theme} styling!");
         }
 
-        public static McpResponse CreatePauseMenu(string theme = "Glassmorphism")
+        public static McpResponse CreatePauseMenu()
         {
             var canvas = GetOrCreateRootCanvas("Pause_Menu_Canvas");
             var menuRoot = new GameObject("Pause_Menu_Root");
@@ -249,10 +246,7 @@ namespace Antigravity.UnityMCP.Editor.Handlers
             menuRect.anchorMax = Vector2.one;
             menuRect.sizeDelta = Vector2.zero;
 
-            // Frosted Backdrop
             CreatePanel(menuRoot.transform, "Backdrop_Blur", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, HexToColor("#05080c", 0.85f));
-
-            // Dialog Card
             var card = CreatePanel(menuRoot.transform, "Card_Dialog", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(400f, 520f), HexToColor("#101720", 0.95f));
             CreateStyledText(card.transform, "Title", "PAUSED", 36, TextAnchor.UpperCenter, HexToColor("#00ffcc"), Vector2.zero, Vector2.one, new Vector2(0f, -30f), Vector2.zero);
 
@@ -327,6 +321,56 @@ namespace Antigravity.UnityMCP.Editor.Handlers
             return McpResponse.Success($"Created Ultra Inventory Grid ({cols}x{rows}) successfully!");
         }
 
+        public static McpResponse CreateDialogueBox(string speaker = "NPC Agent", string dialogue = "Welcome to the future. What is your objective?")
+        {
+            var canvas = GetOrCreateRootCanvas("Dialogue_Canvas");
+            var diagRoot = new GameObject("Dialogue_Panel");
+            diagRoot.transform.SetParent(canvas.transform, false);
+            var rect = diagRoot.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = new Vector2(0f, 120f);
+            rect.sizeDelta = new Vector2(850f, 180f);
+
+            CreatePanel(diagRoot.transform, "Diag_BG", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, HexToColor("#090e15", 0.92f));
+            CreatePanel(diagRoot.transform, "Portrait_Box", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(75f, 0f), new Vector2(120f, 120f), HexToColor("#1a2634"));
+            CreateStyledText(diagRoot.transform, "SpeakerName", speaker.ToUpper(), 18, TextAnchor.UpperLeft, HexToColor("#00ffcc"), Vector2.zero, Vector2.one, new Vector2(160f, -20f), Vector2.zero);
+            CreateStyledText(diagRoot.transform, "DialogueText", dialogue, 16, TextAnchor.UpperLeft, Color.white, Vector2.zero, Vector2.one, new Vector2(160f, -55f), new Vector2(-190f, -80f));
+            CreateStyledButton(diagRoot.transform, "Btn_Continue", "[ SPACE ] CONTINUE ▶", new Vector2(340f, -50f), new Vector2(140f, 32f), HexToColor("#14202c"), HexToColor("#00ffcc"), Color.white);
+
+            Undo.RegisterCreatedObjectUndo(diagRoot, "Create Dialogue Box");
+            return McpResponse.Success("Created Ultra Dialogue Box UI successfully!");
+        }
+
+        public static McpResponse CreateSkillTreeUI()
+        {
+            var canvas = GetOrCreateRootCanvas("SkillTree_Canvas");
+            var treeRoot = new GameObject("Skill_Tree_Root");
+            treeRoot.transform.SetParent(canvas.transform, false);
+            var rect = treeRoot.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+
+            CreatePanel(treeRoot.transform, "Backdrop", Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, HexToColor("#060a10", 0.95f));
+            CreateStyledText(treeRoot.transform, "Title", "ABILITY & PERK TREE", 32, TextAnchor.UpperCenter, HexToColor("#00ffcc"), Vector2.zero, Vector2.one, new Vector2(0f, -30f), Vector2.zero);
+
+            string[] skills = new string[] { "SPEED I", "SPEED II", "DASH", "HEALTH I", "ARMOR I", "REGEN", "DAMAGE I", "CRITICAL", "OVERDRIVE" };
+            for (int r = 0; r < 3; r++)
+            {
+                for (int c = 0; c < 3; c++)
+                {
+                    int idx = r * 3 + c;
+                    float x = (c - 1) * 220f;
+                    float y = (1 - r) * 160f - 20f;
+                    CreateStyledButton(treeRoot.transform, $"Node_{skills[idx]}", $"★ {skills[idx]}", new Vector2(x, y), new Vector2(160f, 65f), HexToColor("#141f2d"), HexToColor("#00ffcc"), Color.white);
+                }
+            }
+
+            Undo.RegisterCreatedObjectUndo(treeRoot, "Create Skill Tree UI");
+            return McpResponse.Success("Created Ultra Skill & Perk Tree UI successfully!");
+        }
+
         public static McpResponse CreateUIElement(string elementType, string parent, string name, string text, float posX, float posY, float width, float height)
         {
             var canvas = GetOrCreateRootCanvas();
@@ -337,7 +381,6 @@ namespace Antigravity.UnityMCP.Editor.Handlers
                 if (p != null) parentTransform = p.transform;
             }
 
-            GameObject elemGo;
             switch (elementType?.ToLowerInvariant())
             {
                 case "hud":
@@ -351,25 +394,25 @@ namespace Antigravity.UnityMCP.Editor.Handlers
                     return CreateVehicleDashboard();
                 case "inventory":
                     return CreateInventoryGrid(4, 5);
+                case "dialogue":
+                case "dialog":
+                    return CreateDialogueBox();
+                case "skill_tree":
+                case "perk_tree":
+                    return CreateSkillTreeUI();
                 case "button":
-                    elemGo = CreateStyledButton(parentTransform, name ?? "Button", text ?? "Button", new Vector2(posX, posY), new Vector2(width > 0 ? width : 160f, height > 0 ? height : 45f), HexToColor("#1a2430"), HexToColor("#00ffcc"), Color.white);
-                    break;
+                    var btn = CreateStyledButton(parentTransform, name ?? "Button", text ?? "Button", new Vector2(posX, posY), new Vector2(width > 0 ? width : 160f, height > 0 ? height : 45f), HexToColor("#1a2430"), HexToColor("#00ffcc"), Color.white);
+                    Selection.activeGameObject = btn;
+                    return McpResponse.Success($"Created Button '{btn.name}'", EntityIdHelper.GetIdString(btn));
                 case "text":
-                    elemGo = CreateStyledText(parentTransform, name ?? "Text", text ?? "Sample Text", 18, TextAnchor.MiddleCenter, Color.white, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(posX, posY), new Vector2(width > 0 ? width : 200f, height > 0 ? height : 40f));
-                    break;
-                case "progressbar":
-                case "healthbar":
-                    elemGo = CreateProgressBar(parentTransform, name ?? "ProgressBar", text ?? "STATUS", HexToColor("#00ffcc"), HexToColor("#222222"), new Vector2(posX, posY), new Vector2(width > 0 ? width : 240f, height > 0 ? height : 24f));
-                    break;
+                    var txt = CreateStyledText(parentTransform, name ?? "Text", text ?? "Sample Text", 18, TextAnchor.MiddleCenter, Color.white, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(posX, posY), new Vector2(width > 0 ? width : 200f, height > 0 ? height : 40f));
+                    Selection.activeGameObject = txt;
+                    return McpResponse.Success($"Created Text '{txt.name}'", EntityIdHelper.GetIdString(txt));
                 default:
-                    elemGo = CreatePanel(parentTransform, name ?? "Panel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(posX, posY), new Vector2(width > 0 ? width : 200f, height > 0 ? height : 200f), HexToColor("#111822", 0.8f));
-                    break;
+                    var pnl = CreatePanel(parentTransform, name ?? "Panel", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(posX, posY), new Vector2(width > 0 ? width : 200f, height > 0 ? height : 200f), HexToColor("#111822", 0.8f));
+                    Selection.activeGameObject = pnl;
+                    return McpResponse.Success($"Created Panel '{pnl.name}'", EntityIdHelper.GetIdString(pnl));
             }
-
-            Undo.RegisterCreatedObjectUndo(elemGo, $"Create UI {elementType}");
-            Selection.activeGameObject = elemGo;
-            string idStr = EntityIdHelper.GetIdString(elemGo);
-            return McpResponse.Success($"Created UI Element '{elemGo.name}' (ID: {idStr})", idStr);
         }
     }
 }
