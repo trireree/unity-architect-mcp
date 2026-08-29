@@ -466,6 +466,20 @@ namespace Antigravity.UnityMCP.Editor.Core
                     case "execute_atomic_transaction":
                         return SafetyAndPreFlightValidationHandler.ExecuteAtomicTransaction(rawBody ?? req.text);
 
+                    // 30. GPU PROCEDURAL ENVIRONMENT (ZERO-CPU DRAW CALL OPTIMIZATION)
+                    case "create_procedural_gpu_grass":
+                    case "generate_optimized_environment":
+                        return GpuProceduralEnvironmentHandler.CreateProceduralGpuGrass(req.target ?? "Environment_Root", req.count > 0 ? req.count : 50000);
+                    case "create_procedural_water":
+                        return GpuProceduralEnvironmentHandler.CreateProceduralWaterSurface(req.target ?? "Environment_Root", req.width > 0 ? req.width : 200f, req.height > 0 ? req.height : 200f);
+
+                    // 31. REAL-TIME CONSOLE STREAM BRIDGE
+                    case "get_live_console_logs":
+                    case "get_console_logs":
+                        return RealtimeConsoleStreamBridge.GetLiveConsoleLogs(req.count > 0 ? req.count : 50, req.filterType ?? "All");
+                    case "clear_live_console_logs":
+                        return RealtimeConsoleStreamBridge.ClearLiveConsoleLogs();
+
                     default:
                         return McpResponse.Error($"Unknown action: '{req.action}'");
                 }
