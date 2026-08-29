@@ -1,6 +1,7 @@
 #pragma warning disable CS0618, CS0619
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Antigravity.UnityMCP.Editor.Core
 {
@@ -198,6 +199,34 @@ namespace Antigravity.UnityMCP.Editor.Core
         public string parent;
         public string tag;
         public string layer;
+    }
+
+    [Serializable]
+    public class BridgeRequest
+    {
+        public string action;
+        public string target;
+        public string name;
+        public string path;
+        public string query;
+        public string code;
+        public string text;
+        public string primitiveType;
+        public string componentType;
+        public string propertyName;
+        public string propertyValue;
+        public string filterType;
+        public string elementType;
+        public string parent;
+        public int count;
+        public float posX;
+        public float posY;
+        public float width;
+        public float height;
+        public float mass;
+        public Vector3? position;
+        public Vector3? rotation;
+        public Vector3? scale;
     }
 
     [Serializable]
