@@ -442,6 +442,22 @@ namespace Antigravity.UnityMCP.Editor.Core
                     case "bake_lightmaps_async":
                         return LightingAndAtmosphereHandler.BakeLightmapsAsync();
 
+                    // 27. GENERATIVE NANO BANANA ASSET PIPELINE
+                    case "generate_and_apply_texture":
+                        return GenerativeAssetBridgeHandler.ApplyTextureToGameObject(req.target, req.path, req.name, req.mass > 0 ? req.mass : 0.5f);
+                    case "import_and_apply_sprite":
+                        return GenerativeAssetBridgeHandler.ApplySpriteToUiElement(req.target, req.path);
+                    case "apply_panoramic_skybox":
+                        return GenerativeAssetBridgeHandler.ApplyPanoramicSkybox(req.path);
+                    case "sync_asset_metadata":
+                        return GenerativeAssetBridgeHandler.SyncAssetMetadata(req.path ?? "Assets");
+                    case "batch_setup_materials":
+                        return GenerativeAssetBridgeHandler.BatchSetupMaterials(req.path, req.name);
+
+                    // 28. BI-DIRECTIONAL ANTIGRAVITY IDE CONTEXT SYNC
+                    case "get_live_editor_context":
+                        return BiDirectionalIdeSyncHandler.GetLiveEditorContext();
+
                     default:
                         return McpResponse.Error($"Unknown action: '{req.action}'");
                 }
