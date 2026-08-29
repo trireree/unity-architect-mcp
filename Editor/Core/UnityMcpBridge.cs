@@ -394,6 +394,26 @@ namespace Antigravity.UnityMCP.Editor.Core
                     case "scaffold_custom_inspector":
                         return CustomEditorToolingHandler.ScaffoldCustomInspector(req.name, req.path ?? "Assets/Editor");
 
+                    // 21. CODEBASE RAG & VECTOR SEARCH
+                    case "rag_semantic_search":
+                        return CodebaseRagAndVectorHandler.SemanticSearchCodebase(req.query ?? req.text, req.path ?? "Assets", req.count > 0 ? req.count : 5);
+
+                    // 22. GIT & VERSION CONTROL
+                    case "git_status":
+                        return GitAndVersionControlHandler.GetGitStatus();
+                    case "git_diff":
+                        return GitAndVersionControlHandler.GetGitDiff();
+                    case "git_commit":
+                        return GitAndVersionControlHandler.AutoCommit(req.text ?? req.name);
+                    case "git_rollback":
+                        return GitAndVersionControlHandler.RollbackGit();
+
+                    // 23. RENDER PIPELINE & GRAPHICS
+                    case "graphics_get_settings":
+                        return RenderPipelineAndGraphicsHandler.GetGraphicsSettings();
+                    case "graphics_set_quality":
+                        return RenderPipelineAndGraphicsHandler.SetQualityLevel(req.name ?? req.text);
+
                     default:
                         return McpResponse.Error($"Unknown action: '{req.action}'");
                 }
