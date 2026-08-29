@@ -360,11 +360,35 @@ namespace Antigravity.UnityMCP.Editor.Core
                     case "package_list":
                         return PackageManagerHandler.GetInstalledPackages();
 
-                    // 16. TOKEN COMPRESSION & SMART CONTEXT
+                    // 16. TOKEN COMPRESSION & SMART AST CONTEXT
                     case "query_compact_context":
                         return SmartContextCompressionHandler.QueryCompressedContext(req.text ?? req.query, req.count > 0 ? req.count : 30);
+                    case "ast_extract_summary":
+                        return AstAndRoslynIntelligenceHandler.ExtractAstSummary(req.path);
+                    case "ast_find_references":
+                        return AstAndRoslynIntelligenceHandler.FindSymbolReferences(req.name ?? req.text, req.path ?? "Assets");
 
-                    // 17. CUSTOM EDITOR WINDOWS & TOOLING
+                    // 17. SCRIPTABLE OBJECT & DATA TABLES
+                    case "scriptable_object_create":
+                        return ScriptableObjectAndInspectorHandler.CreateScriptableObject(req.name, req.path);
+                    case "scriptable_object_read":
+                        return ScriptableObjectAndInspectorHandler.ReadScriptableObjectData(req.path);
+                    case "scriptable_object_set_property":
+                        return ScriptableObjectAndInspectorHandler.SetScriptableObjectProperty(req.path, req.propertyName, req.propertyValue);
+
+                    // 18. UNIT TEST RUNNER AUTOMATION
+                    case "unit_test_run":
+                        return UnitTestRunnerHandler.RunUnitTests(req.name ?? "EditMode");
+
+                    // 19. SCENE HIERARCHY & PREFAB DIRECTIVES
+                    case "get_scene_hierarchy":
+                        return McpResponse.Success("Retrieved scene hierarchy.", SceneHandler.GetHierarchy());
+                    case "modify_gameobject":
+                        return SceneAndTransformHandler.ModifyTransform(req.target, req.position, req.rotation, req.scale, null, null, null, req.parent, null);
+                    case "instantiate_prefab":
+                        return SceneAndTransformHandler.InstantiatePrefab(req.path, req.position, req.rotation, req.parent, req.name);
+
+                    // 20. CUSTOM EDITOR WINDOWS & TOOLING
                     case "scaffold_editor_window":
                         return CustomEditorToolingHandler.ScaffoldCustomEditorWindow(req.name ?? "CustomToolWindow", req.text ?? "Tools/Custom Tool");
                     case "scaffold_custom_inspector":
