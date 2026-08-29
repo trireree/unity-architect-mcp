@@ -308,6 +308,16 @@ namespace Antigravity.UnityMCP.Editor.Core
                         return ProceduralCityGenerator.GenerateProceduralCity(cfg);
                     }
 
+                    case "optimize_project":
+                    {
+                        var report = OptimizationEngine.OptimizeProject(true);
+                        return McpResponse.Success($"Project optimization completed ({report.totalOptimizationsApplied} actions applied, ~{report.estimatedDrawCallSavings} draw calls saved).", JsonUtility.ToJson(report, true));
+                    }
+                    case "optimize_combine_meshes":
+                    {
+                        return OptimizationEngine.CombineMeshesInGameObject(req.target);
+                    }
+
                     case "quality_gate":
                     {
                         var report = QualityGateEngine.EvaluateProjectQuality();
