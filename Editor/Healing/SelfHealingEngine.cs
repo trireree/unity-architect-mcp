@@ -1,6 +1,8 @@
+#pragma warning disable CS0618, CS0619
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using Antigravity.UnityMCP.Editor.Core;
 using Antigravity.UnityMCP.Editor.Handlers;
 using Antigravity.UnityMCP.Editor.Transaction;
@@ -23,18 +25,18 @@ namespace Antigravity.UnityMCP.Editor.Healing
 
     public static class SelfHealingEngine
     {
-        public const int MaxRepairAttempts = 3;
+        public const int MaxRepairAttempts = 2; // Strict limit to prevent infinite loops
 
         public static HealingReportDto RunSelfHealingLoop(string transactionId = null)
         {
             var report = new HealingReportDto();
             var tx = transactionId ?? TransactionManager.ActiveTransactionId;
+            int lastErrorCount = int.MaxValue;
 
             for (int attempt = 1; attempt <= MaxRepairAttempts; attempt++)
             {
                 report.attemptsUsed = attempt;
 
-                // 1. Collect all errors (Compile + Console + Scene Validation)
                 var errors = CollectAllErrors();
                 if (attempt == 1) report.initialErrorCount = errors.Count;
 
@@ -45,9 +47,18 @@ namespace Antigravity.UnityMCP.Editor.Healing
                     return report;
                 }
 
-                bool anyPatchApplied = false;
+                // If errors did not decrease after an attempt, break out immediately
+                if (errors.Count >= lastErrorCount && attempt > 1)
+                {
+                    report.remainingErrors = errors;
+                    report.remainingErrorCount = errors.Count;
+                    report.isHealed = false;
+                    report.appliedPatches.Add("Self-Healing loop broken: Errors require AI / developer manual code edit.");
+                    return report;
+                }
+                lastErrorCount = errors.Count;
 
-                // 2. Attempt automated patches
+                bool anyPatchApplied = false;
                 foreach (var err in errors)
                 {
                     if (ApplyAutomatedPatch(err, out string patchDesc))
@@ -59,14 +70,12 @@ namespace Antigravity.UnityMCP.Editor.Healing
 
                 if (!anyPatchApplied)
                 {
-                    // No automated rule matched; return remaining errors for AI intervention
                     report.remainingErrors = errors;
                     report.remainingErrorCount = errors.Count;
                     report.isHealed = false;
                     return report;
                 }
 
-                // 3. Trigger compilation/asset refresh and verify
                 AssetDatabase.Refresh();
             }
 
@@ -75,13 +84,6 @@ namespace Antigravity.UnityMCP.Editor.Healing
             report.remainingErrorCount = finalErrors.Count;
             report.isHealed = (finalErrors.Count == 0);
 
-            if (!report.isHealed && !string.IsNullOrEmpty(tx))
-            {
-                // Auto-rollback if repairs failed
-                TransactionManager.RollbackTransaction(tx);
-                report.appliedPatches.Add($"Auto-rolled back transaction '{tx}' due to persistent errors.");
-            }
-
             return report;
         }
 
@@ -89,7 +91,7 @@ namespace Antigravity.UnityMCP.Editor.Healing
         {
             var results = new List<ClassifiedError>();
 
-            // Check Scene Validation
+            // 1. Scene Integrity Check
             var valReport = ValidationManager.ValidateScene();
             foreach (var issue in valReport.issues)
             {
@@ -106,8 +108,8 @@ namespace Antigravity.UnityMCP.Editor.Healing
                 }
             }
 
-            // Check Console Logs
-            var logsRes = PlayModeHandler.GetConsoleLogs(50, "Error");
+            // 2. Console Logs Check
+            var logsRes = PlayModeHandler.GetConsoleLogs(30, "Error");
             if (logsRes.success && !string.IsNullOrEmpty(logsRes.data))
             {
                 try
@@ -128,26 +130,44 @@ namespace Antigravity.UnityMCP.Editor.Healing
         {
             patchDesc = null;
 
-            // Automated Missing Namespace Patch for C#
-            if (err.category == "CompileError" && err.code == "CS0246" && !string.IsNullOrEmpty(err.filePath) && File.Exists(err.filePath))
+            // 1. Missing Namespaces (CS0246 / CS0234)
+            if (err.category == "CompileError" && (err.code == "CS0246" || err.code == "CS0234") && !string.IsNullOrEmpty(err.filePath) && File.Exists(err.filePath))
             {
                 string content = File.ReadAllText(err.filePath);
-                string missingNamespace = null;
+                string missingUsing = null;
 
-                if (err.message.Contains("NavMesh") && !content.Contains("using UnityEngine.AI;")) missingNamespace = "using UnityEngine.AI;";
-                else if (err.message.Contains("TMP_") && !content.Contains("using TMPro;")) missingNamespace = "using TMPro;";
-                else if ((err.message.Contains("Image") || err.message.Contains("Button")) && !content.Contains("using UnityEngine.UI;")) missingNamespace = "using UnityEngine.UI;";
+                if (err.message.Contains("NavMesh") && !content.Contains("using UnityEngine.AI;")) missingUsing = "using UnityEngine.AI;";
+                else if (err.message.Contains("TMP_") && !content.Contains("using TMPro;")) missingUsing = "using TMPro;";
+                else if ((err.message.Contains("Image") || err.message.Contains("Button") || err.message.Contains("Canvas")) && !content.Contains("using UnityEngine.UI;")) missingUsing = "using UnityEngine.UI;";
+                else if (err.message.Contains("EditorSceneManager") && !content.Contains("using UnityEditor.SceneManagement;")) missingUsing = "using UnityEditor.SceneManagement;";
 
-                if (!string.IsNullOrEmpty(missingNamespace))
+                if (!string.IsNullOrEmpty(missingUsing))
                 {
-                    File.WriteAllText(err.filePath, $"{missingNamespace}\n{content}");
+                    File.WriteAllText(err.filePath, $"{missingUsing}\n{content}");
                     AssetDatabase.ImportAsset(err.filePath, ImportAssetOptions.ForceUpdate);
-                    patchDesc = $"Injected '{missingNamespace}' into '{err.filePath}'";
+                    patchDesc = $"Injected '{missingUsing}' into '{err.filePath}'";
                     return true;
                 }
             }
 
-            // Automated Missing Component Patch for GameObjects
+            // 2. Obsolete FindObjectsOfType Call Replacement
+            if (err.category == "CompileError" && !string.IsNullOrEmpty(err.filePath) && File.Exists(err.filePath))
+            {
+                string content = File.ReadAllText(err.filePath);
+                if (content.Contains("FindObjectsOfType<"))
+                {
+                    string patched = Regex.Replace(content, @"FindObjectsOfType<([^>]+)>\(\)", "FindObjectsByType<$1>(FindObjectsSortMode.None)");
+                    if (patched != content)
+                    {
+                        File.WriteAllText(err.filePath, patched);
+                        AssetDatabase.ImportAsset(err.filePath, ImportAssetOptions.ForceUpdate);
+                        patchDesc = $"Updated deprecated FindObjectsOfType to FindObjectsByType in '{err.filePath}'";
+                        return true;
+                    }
+                }
+            }
+
+            // 3. Clean Missing Scripts from Scene GameObjects
             if (err.category == "SceneIntegrity" && err.code == "MissingScript" && !string.IsNullOrEmpty(err.targetObject))
             {
                 var go = SceneHandler.FindGameObject(err.targetObject);
@@ -159,6 +179,14 @@ namespace Antigravity.UnityMCP.Editor.Healing
                 }
             }
 
+            // 4. Missing Meta File Auto-Generator
+            if (err.message.Contains("has no meta file"))
+            {
+                AssetDatabase.ForceReserializeAssets();
+                patchDesc = "Triggered AssetDatabase.ForceReserializeAssets() for missing meta files.";
+                return true;
+            }
+
             return false;
         }
 
@@ -166,10 +194,10 @@ namespace Antigravity.UnityMCP.Editor.Healing
         {
             switch (issueType)
             {
-                case "MissingScript": return "Remove missing script component with GameObjectUtility.RemoveMonoBehavioursWithMissingScript or reassign class.";
-                case "BrokenShader": return "Reassign valid Universal Render Pipeline/Lit shader to material.";
-                case "MissingCamera": return "Create a Main Camera with Camera and AudioListener components.";
-                default: return "Review scene hierarchy and inspector settings.";
+                case "MissingScript": return "Remove missing MonoBehaviour component or reattach script asset.";
+                case "UnassignedReference": return "Assign required serialized field reference.";
+                case "DuplicateCamera": return "Disable secondary AudioListener or redundant Camera.";
+                default: return "Inspect GameObject hierarchy and component state.";
             }
         }
     }

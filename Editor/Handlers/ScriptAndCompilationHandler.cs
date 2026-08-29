@@ -1,12 +1,13 @@
+#pragma warning disable CS0618, CS0619
 using System;
 using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using Antigravity.UnityMCP.Editor.Core;
 using Microsoft.CSharp;
 using UnityEditor;
-using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace Antigravity.UnityMCP.Editor.Handlers
@@ -36,7 +37,6 @@ namespace Antigravity.UnityMCP.Editor.Handlers
         {
             bool isCompiling = EditorApplication.isCompiling;
             bool isUpdating = EditorApplication.isUpdating;
-
             string status = $"Compiling: {isCompiling}, Updating: {isUpdating}";
             return McpResponse.Success(status, isCompiling ? "COMPILING" : "READY");
         }
@@ -52,12 +52,20 @@ namespace Antigravity.UnityMCP.Editor.Handlers
                     GenerateExecutable = false
                 };
 
-                // Add Unity and .NET references
+                // Add sanitized references without duplicate BCL conflicts
+                var addedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
                     try
                     {
-                        if (!assembly.IsDynamic && !string.IsNullOrEmpty(assembly.Location))
+                        if (assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location) || !File.Exists(assembly.Location))
+                            continue;
+
+                        string asmName = assembly.GetName().Name;
+                        if (string.Equals(asmName, "System.Private.CoreLib", StringComparison.OrdinalIgnoreCase) && addedNames.Contains("mscorlib"))
+                            continue;
+
+                        if (addedNames.Add(asmName))
                         {
                             parameters.ReferencedAssemblies.Add(assembly.Location);
                         }
@@ -65,40 +73,65 @@ namespace Antigravity.UnityMCP.Editor.Handlers
                     catch { }
                 }
 
-                string fullCode = $@"
+                string wrappedCode = code.Trim();
+                if (!wrappedCode.Contains("return ") && !wrappedCode.EndsWith(";"))
+                {
+                    wrappedCode = $"return ({wrappedCode});";
+                }
+                else if (!wrappedCode.Contains("return "))
+                {
+                    wrappedCode += "\nreturn \"Execution completed successfully.\";";
+                }
+
+                string fullSource = $@"
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 
 namespace Antigravity.DynamicExec
 {{
-    public class RuntimeExecutor
+    public static class DynamicScriptRunner
     {{
-        public static object Run()
+        public static object Execute()
         {{
-            {code}
+            {wrappedCode}
         }}
     }}
 }}";
 
-                var results = csc.CompileAssemblyFromSource(parameters, fullCode);
+                var results = csc.CompileAssemblyFromSource(parameters, fullSource);
 
                 if (results.Errors.HasErrors)
                 {
-                    var errors = string.Join("\n", results.Errors.Cast<CompilerError>().Select(e => $"Line {e.Line}: {e.ErrorText}"));
-                    return McpResponse.Error($"C# Compilation Error:\n{errors}");
+                    var errors = new List<string>();
+                    foreach (CompilerError err in results.Errors)
+                    {
+                        if (!err.IsWarning) errors.Add($"Line {err.Line}: {err.ErrorText}");
+                    }
+                    if (errors.Count > 0)
+                    {
+                        return McpResponse.Error($"C# Dynamic Compilation Error:\n{string.Join("\n", errors)}");
+                    }
                 }
 
-                var type = results.CompiledAssembly.GetType("Antigravity.DynamicExec.RuntimeExecutor");
-                var method = type.GetMethod("Run", BindingFlags.Public | BindingFlags.Static);
+                var type = results.CompiledAssembly.GetType("Antigravity.DynamicExec.DynamicScriptRunner");
+                var method = type.GetMethod("Execute", BindingFlags.Public | BindingFlags.Static);
                 var result = method.Invoke(null, null);
 
-                return McpResponse.Success("Execution successful.", result?.ToString() ?? "void");
+                return McpResponse.Success("Execution successful.", result?.ToString() ?? "null");
+            }
+            catch (TargetInvocationException tex)
+            {
+                var inner = tex.InnerException ?? tex;
+                return McpResponse.Error($"Runtime Exception: {inner.Message}\n{inner.StackTrace}");
             }
             catch (Exception ex)
             {
-                return McpResponse.Error($"Runtime Execution Error: {ex.Message}\n{ex.StackTrace}");
+                return McpResponse.Error($"Execution Error: {ex.Message}\n{ex.StackTrace}");
             }
         }
     }

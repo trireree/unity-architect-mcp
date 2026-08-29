@@ -127,7 +127,7 @@ namespace Antigravity.UnityMCP.Editor.UI
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.Space(8);
-            if (GUILayout.Button("📋 Copy MCP Server Configuration JSON", GUILayout.Height(26)))
+            if (GUILayout.Button("[Copy] Copy MCP Server Configuration JSON", GUILayout.Height(26)))
             {
                 string snippet = $"{{\n  \"mcpServers\": {{\n    \"unity\": {{\n      \"command\": \"node\",\n      \"args\": [\"path/to/mcp-server/dist/index.js\"],\n      \"env\": {{\n        \"UNITY_BRIDGE_URL\": \"http://127.0.0.1:{UnityMcpBridge.Port}\"\n      }}\n    }}\n  }}\n}}";
                 EditorGUIUtility.systemCopyBuffer = snippet;
