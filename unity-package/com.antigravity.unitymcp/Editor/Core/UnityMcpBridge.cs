@@ -481,9 +481,17 @@ namespace Antigravity.UnityMCP.Editor.Core
                     case "animator_add_param":
                         return AnimationHandler.AddParameter(req.path, req.name, req.paramType);
                     case "ui_create_canvas":
-                        return UIHandler.CreateCanvas(req.renderMode);
+                        return McpResponse.Success("Canvas ready.", UIHandler.GetOrCreateRootCanvas().name);
                     case "ui_create_element":
                         return UIHandler.CreateUIElement(req.elementType, req.parent, req.name, req.text, req.posX, req.posY, req.width, req.height);
+                    case "ui_create_hud":
+                        return UIHandler.CreateModernGameHUD(req.text ?? "Cyberpunk");
+                    case "ui_create_pause_menu":
+                        return UIHandler.CreatePauseMenu();
+                    case "ui_create_dashboard":
+                        return UIHandler.CreateVehicleDashboard();
+                    case "ui_create_inventory":
+                        return UIHandler.CreateInventoryGrid(req.count > 0 ? req.count : 4, 5);
                     case "playmode_start":
                         return PlayModeHandler.StartPlayMode();
                     case "playmode_stop":
