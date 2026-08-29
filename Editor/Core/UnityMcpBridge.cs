@@ -57,9 +57,8 @@ namespace Antigravity.UnityMCP.Editor.Core
         {
             EditorApplication.quitting += StopServer;
             AssemblyReloadEvents.beforeAssemblyReload += StopServer;
-            AssemblyReloadEvents.afterAssemblyReload += StartServer;
-
-            StartServer();
+            AssemblyReloadEvents.afterAssemblyReload += () => EditorApplication.delayCall += StartServer;
+            EditorApplication.delayCall += StartServer;
         }
 
         public static void StartServer()
