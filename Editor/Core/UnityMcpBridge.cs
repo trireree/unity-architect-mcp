@@ -414,6 +414,34 @@ namespace Antigravity.UnityMCP.Editor.Core
                     case "graphics_set_quality":
                         return RenderPipelineAndGraphicsHandler.SetQualityLevel(req.name ?? req.text);
 
+                    // 24. DEEP PERFORMANCE & GC OPTIMIZER
+                    case "audit_static_batching":
+                        return DeepPerformanceOptimizerHandler.AuditAndTagStaticBatching();
+                    case "detect_gc_allocations":
+                        return DeepPerformanceOptimizerHandler.DetectGcAllocationsInCode(req.path ?? "Assets");
+                    case "optimize_imports":
+                        return DeepPerformanceOptimizerHandler.OptimizeTextureAndMeshImports();
+                    case "generate_lod_group":
+                        return DeepPerformanceOptimizerHandler.GenerateLodGroup(req.target);
+
+                    // 25. UI DSL, THEMING & EVENT BINDING
+                    case "build_ui_layout":
+                        return UiDslAndThemingHandler.BuildUiLayout(req.text ?? req.query);
+                    case "apply_ui_theme":
+                        return UiDslAndThemingHandler.ApplyUiTheme(req.text);
+                    case "bind_ui_event":
+                        return UiDslAndThemingHandler.BindUiEvent(req.name, req.target, req.componentType, req.propertyName);
+
+                    // 26. ATMOSPHERIC LIGHTING & POST PROCESSING
+                    case "tune_post_processing":
+                        return LightingAndAtmosphereHandler.TunePostProcessing(req.name ?? req.text ?? "Cyberpunk");
+                    case "optimize_scene_lights":
+                        return LightingAndAtmosphereHandler.OptimizeSceneLights(req.mass > 0 ? req.mass : 100f);
+                    case "set_environment_ambience":
+                        return LightingAndAtmosphereHandler.SetEnvironmentAmbience(true, req.mass > 0 ? req.mass : 0.02f, req.text, req.propertyName);
+                    case "bake_lightmaps_async":
+                        return LightingAndAtmosphereHandler.BakeLightmapsAsync();
+
                     default:
                         return McpResponse.Error($"Unknown action: '{req.action}'");
                 }
